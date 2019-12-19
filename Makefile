@@ -11,3 +11,6 @@ build:
 
 build-name:
 	GOOS=linux GOARCH=amd64 go build -o hello-name/hello-name ./hello-name
+build-message:
+	GOOS=linux GOARCH=amd64 go build -o get-message/get-message ./get-message
+	GOOS=linux GOARCH=amd64 go build -o send-message/send-message ./send-message

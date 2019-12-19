@@ -11,45 +11,55 @@ Globals:
     Timeout: 5
 
 Resources:
-  HelloWorldFunction:
-    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+  MySqsQueue:
+    Type: AWS::SQS::Queue
     Properties:
-      CodeUri: hello-world/
-      Handler: hello-world
-      Runtime: go1.x
-      Tracing: Active # https://docs.aws.amazon.com/lambda/latest/dg/lambda-x-ray.html
-      Events:
-        CatchAll:
-          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
-          Properties:
-            Path: /hello
-            Method: GET
-      Environment: # More info about Env Vars: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#environment-object
-        Variables:
-          PARAM1: VALUE
-  HelloNameFunction:
+      FifoQueue: true
+      QueueName: myqueue.fifo
+  GetMessageFromSqs:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: hello-name/
-      Handler: hello-name
+      CodeUri: get-message/
+      Handler: get-message
       Runtime: go1.x
-      Tracing: Active
+      MemorySize: 128
+      Timeout: 30
       Events:
         CatchAll:
           Type: Api
           Properties:
-            Path: /hello-name/{name}
+            Path: /message
             Method: GET
+      Environment:
+        Variables:
+          PARAM1: VALUE
+      Policies:
+        - SQSPollerPolicy:
+            QueueName: !GetAtt MySqsQueue.QueueName
+  SendMessageToSqs:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: send-message/
+      Handler: send-message
+      Runtime: go1.x
+      MemorySize: 128
+      Timeout: 30
+      Events:
+        CatchAll:
+          Type: Api
+          Properties:
+            Path: /message/{name}
+            Method: POST
+      Policies:
+        - SQSSendMessagePolicy:
+            QueueName: !GetAtt MySqsQueue.QueueName
 Outputs:
-  # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
-  # Find out more about other implicit resources you can reference within SAM
-  # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
-  HelloWorldAPI:
-    Description: "API Gateway endpoint URL for Prod environment for First Function"
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/hello/"
-  HelloWorldFunction:
-    Description: "First Lambda Function ARN"
-    Value: !GetAtt HelloWorldFunction.Arn
-  HelloWorldFunctionIamRole:
-    Description: "Implicit IAM Role created for Hello World function"
-    Value: !GetAtt HelloWorldFunctionRole.Arn
+  GetMessageAPI:
+    Description: "API Gateway endpoint URL for Prod environment for get message from queue"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/message/"
+  PostMessageAPI:
+    Description: "API Gateway endpoint URL for Prod environment for post message to queue"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/message/"
+  MySqsUrl:
+    Description: "Demo SQS URL"
+    Value: !Ref MySqsQueue 
