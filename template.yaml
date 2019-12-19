@@ -27,7 +27,19 @@ Resources:
       Environment: # More info about Env Vars: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#environment-object
         Variables:
           PARAM1: VALUE
-
+  HelloNameFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: hello-name/
+      Handler: hello-name
+      Runtime: go1.x
+      Tracing: Active
+      Events:
+        CatchAll:
+          Type: Api
+          Properties:
+            Path: /hello-name/{name}
+            Method: GET
 Outputs:
   # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
   # Find out more about other implicit resources you can reference within SAM
