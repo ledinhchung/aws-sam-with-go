@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
@@ -11,29 +12,22 @@ import (
 )
 
 func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-	sess, err := session.NewSession(&aws.Config{
-		Region: aws.String("us-west-2")},
-	)
-
-	if err != nil {
-		return events.APIGatewayProxyResponse{
-			Body:       "OK",
-			StatusCode: 200,
-		}, nil
-	}
+	sess := session.Must(session.NewSessionWithOptions(session.Options{
+		SharedConfigState: session.SharedConfigEnable,
+	}))
 
 	svc := sqs.New(sess)
-	sqsUrl := "https://sqs.us-east-1.amazonaws.com/334351750236/myqueue.fifo"
+	sqsUrl := os.Getenv("SQS_URL")
 
 	result, err := svc.ReceiveMessage(&sqs.ReceiveMessageInput{
 		QueueUrl:            &sqsUrl,
-		WaitTimeSeconds:     aws.Int64(20),
+		WaitTimeSeconds:     aws.Int64(0),
 		MaxNumberOfMessages: aws.Int64(10),
 	})
 
 	if err != nil {
 		return events.APIGatewayProxyResponse{
-			Body:       fmt.Sprintf("Error %v", err),
+			Body:       fmt.Sprintf("Error %v", sqsUrl),
 			StatusCode: 500,
 		}, nil
 	}

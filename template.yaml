@@ -32,18 +32,22 @@ Resources:
             Method: GET
       Environment:
         Variables:
-          PARAM1: VALUE
+          SQS_URL: !Ref MySqsQueue
       Policies:
         - SQSPollerPolicy:
             QueueName: !GetAtt MySqsQueue.QueueName
   SendMessageToSqs:
     Type: AWS::Serverless::Function
+    DependsOn: MySqsQueue
     Properties:
       CodeUri: send-message/
       Handler: send-message
       Runtime: go1.x
       MemorySize: 128
       Timeout: 30
+      Environment:
+        Variables:
+          SQS_URL: !Ref MySqsQueue
       Events:
         CatchAll:
           Type: Api
